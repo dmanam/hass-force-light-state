@@ -1,0 +1,12 @@
+{
+  "domain": "force_light_state",
+  "name": "Force Light State",
+  "documentation": "https://github.com/dmanam/force-light-state",
+  "issue_tracker": "https://github.com/dmanam/force-light-state",
+  "config_flow": false,
+  "dependencies": [],
+  "codeowners": ["@dmanam"],
+  "version": "0.0.1",
+  "requirements": [],
+  "iot_class": "calculated"
+}
