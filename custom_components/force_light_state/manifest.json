@@ -1,8 +1,8 @@
 {
   "domain": "force_light_state",
   "name": "Force Light State",
-  "documentation": "https://github.com/dmanam/force-light-state",
-  "issue_tracker": "https://github.com/dmanam/force-light-state",
+  "documentation": "https://github.com/dmanam/hass-force-light-state",
+  "issue_tracker": "https://github.com/dmanam/hass-force-light-state",
   "config_flow": false,
   "dependencies": [],
   "codeowners": ["@dmanam"],
