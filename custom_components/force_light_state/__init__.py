@@ -97,6 +97,9 @@ class Forcer:
         if not any(eid in self.lights for eid in entity_ids):
             return
 
+        if event.context.id.startswith(CTX_PREFIX):
+            return
+
         if service == SERVICE_TURN_OFF:
             _LOGGER.debug(
                 "Detected an 'light.turn_off('%s')' event with context.id='%s'",
@@ -121,10 +124,11 @@ class Forcer:
     def create_context(self):
         cnt_packed = base64.b85encode(_int_to_bytes(self._context_cnt, signed=False))
         self._context_cnt += 1
-        cid = f"{ADAPTIVE_DOMAIN_SHORT}:forcer:{cnt_packed}"[:36]
+        cid = f"{CTX_PREFIX}:{cnt_packed}"[:36]
         return Context(id=cid)
 
     async def time_interval_listener(self, now=None) -> None:
+        context = None
         for light, saved in self.lights.items():
             if "state" not in saved:
                 continue
@@ -152,7 +156,8 @@ class Forcer:
             for attr in attrs:
                 if attr in saved:
                     service_data[attr] = saved[attr]
-            context = self.create_context()
+            if context == None:
+                context = self.create_context()
             _LOGGER.debug(
                 "Scheduling 'light.turn_on' with the following 'service_data': %s"
                 " with context.id='%s'",
