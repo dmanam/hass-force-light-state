@@ -52,7 +52,7 @@ from .const import *
 _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = vol.Schema(
-    {DOMAIN: list},
+    {DOMAIN: cv.entities_domain(LIGHT_DOMAIN)},
     extra=vol.ALLOW_EXTRA
 )
 def _int_to_bytes(i: int, signed: bool = False) -> bytes:
