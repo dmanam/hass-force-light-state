@@ -1,6 +1,6 @@
 import base64
-import datetime
 import logging
+from datetime import *
 from typing import Any
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
@@ -66,6 +66,8 @@ class Forcer:
     def __init__(self, hass, lights):
         self.hass = hass
         self.lights = {light: {} for light in lights}
+        self.recency = {light: datetime.min for light in lights}
+        self.delay_mult = {light: 0 for light in lights}
         self._context_cnt = 0
 
     async def call_service_listener(self, event: Event) -> None:
@@ -107,6 +109,7 @@ class Forcer:
                 event.context.id,
             )
             for eid in entity_ids:
+                self.delay_mult[eid] = 0
                 self.lights[eid] = {"state": "off"}
         elif service == SERVICE_TURN_ON:
             _LOGGER.debug(
@@ -115,6 +118,7 @@ class Forcer:
                 event.context.id,
             )
             for eid in entity_ids:
+                self.delay_mult[eid] = 0
                 self.lights[eid]["state"] = "on"
                 sdata = event.data[ATTR_SERVICE_DATA]
                 for attr in [ATTR_BRIGHTNESS, ATTR_COLOR_TEMP]:
@@ -127,7 +131,19 @@ class Forcer:
         cid = f"{CTX_PREFIX}:{cnt_packed}"[:36]
         return Context(id=cid)
 
+    def ready_set(self, light, now):
+        delta = now - self.recency[light]
+        mindelta = self.delay_mult[light] * timedelta(milliseconds=CHECK_INTERVAL)
+        if delta >= mindelta:
+            self.recency[light] = now
+            self.delay_mult[light] = min(self.delay_mult[light] + 1, MAX_DELAY_MULTIPLIER)
+            return True
+        else:
+            return False
+
     async def time_interval_listener(self, now=None) -> None:
+        if now is None:
+            now = datetime.now()
         context = None
         for light, saved in self.lights.items():
             if "state" not in saved:
@@ -136,13 +152,15 @@ class Forcer:
             do_fix = False
             service_data = {ATTR_ENTITY_ID: light}
             if curr.state != saved["state"]:
+                if not self.ready_set(light, now):
+                    continue
                 if saved["state"] == "off":
                     _LOGGER.debug(
                         "Turning off '%s'",
                         light,
                     )
                     await self.hass.services.async_call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
-                    return
+                    continue
                 else:
                     do_fix = True
             attrs = [ATTR_BRIGHTNESS, ATTR_COLOR_TEMP]
@@ -173,7 +191,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, list]):
         data = hass.data.setdefault(DOMAIN, {})
         data["forcer"] = Forcer(hass, config[DOMAIN])
         hass.bus.async_listen(EVENT_CALL_SERVICE, data["forcer"].call_service_listener)
-        async_track_time_interval(hass, data["forcer"].time_interval_listener, datetime.timedelta(milliseconds=CHECK_INTERVAL))
+        async_track_time_interval(hass, data["forcer"].time_interval_listener, timedelta(milliseconds=CHECK_INTERVAL))
 
     return True
 
