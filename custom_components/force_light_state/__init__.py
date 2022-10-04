@@ -96,7 +96,12 @@ class Forcer:
             )
             return
 
-        if not any(eid in self.lights for eid in entity_ids):
+        entity_ids = [eid for eid in entity_ids if eid in self.lights]
+
+        if len(entity_ids) == 0:
+            _LOGGER.debug(
+                "No relevant entity_ids or area_ids found in service_data: %s", service_data
+            )
             return
 
         if event.context.id.startswith(CTX_PREFIX):
@@ -104,7 +109,7 @@ class Forcer:
 
         if service == SERVICE_TURN_OFF:
             _LOGGER.debug(
-                "Detected an 'light.turn_off('%s')' event with context.id='%s'",
+                "Detected a 'light.turn_off('%s')' event with context.id='%s'",
                 entity_ids,
                 event.context.id,
             )
@@ -113,7 +118,7 @@ class Forcer:
                 self.lights[eid] = {"state": "off"}
         elif service == SERVICE_TURN_ON:
             _LOGGER.debug(
-                "Detected an 'light.turn_on('%s')' event with context.id='%s'",
+                "Detected a 'light.turn_on('%s')' event with context.id='%s'",
                 entity_ids,
                 event.context.id,
             )
@@ -143,7 +148,7 @@ class Forcer:
 
     async def time_interval_listener(self, now=None) -> None:
         if now is None:
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
         context = None
         for light, saved in self.lights.items():
             if "state" not in saved:
@@ -156,7 +161,7 @@ class Forcer:
                     continue
                 if saved["state"] == "off":
                     _LOGGER.debug(
-                        "Turning off '%s'",
+                        "Scheduling 'light.turn_off' for '%s'",
                         light,
                     )
                     await self.hass.services.async_call(LIGHT_DOMAIN, SERVICE_TURN_OFF, service_data)
