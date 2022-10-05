@@ -66,7 +66,7 @@ class Forcer:
     def __init__(self, hass, lights):
         self.hass = hass
         self.lights = {light: {} for light in lights}
-        self.recency = {light: datetime.min for light in lights}
+        self.recency = {light: datetime.min.replace(tzinfo=timezone.utc) for light in lights}
         self.delay_mult = {light: 0 for light in lights}
         self._context_cnt = 0
 
@@ -147,7 +147,7 @@ class Forcer:
             return False
 
     async def time_interval_listener(self, now=None) -> None:
-        if now is None:
+        if now is None or now.tzinfo is None:
             now = datetime.now(timezone.utc)
         context = None
         for light, saved in self.lights.items():
