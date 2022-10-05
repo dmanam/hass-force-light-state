@@ -175,6 +175,7 @@ class Forcer:
                     if diff > 10 or diff < -10:
                         do_fix = True
             if not do_fix:
+                self.delay_mult[light] = 0
                 continue
             for attr in attrs:
                 if attr in saved:
