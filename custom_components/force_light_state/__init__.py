@@ -154,6 +154,8 @@ class Forcer:
             if "state" not in saved:
                 continue
             curr = self.hass.states.get(light)
+            if curr is None:
+                continue
             do_fix = False
             service_data = {ATTR_ENTITY_ID: light}
             if curr.state != saved["state"]:
