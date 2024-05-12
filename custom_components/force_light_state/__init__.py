@@ -131,10 +131,14 @@ class Forcer:
                         self.lights[eid][attr] = sdata[attr]
 
     def create_context(self):
-        cnt_packed = base64.b85encode(_int_to_bytes(self._context_cnt, signed=False))
+        # partially taken from https://github.com/basnijhot/adaptive_lighting
         self._context_cnt += 1
-        cid = f"{CTX_PREFIX}:{cnt_packed}"[:26]
-        return Context(id=cid)
+        cnt_packed = base64.b85encode(_int_to_bytes(self._context_cnt, signed=False))[::-1]
+        time_stamp = ulid_transform.ulid_now()[:10]  # time part of a ULID
+        context_id_start = f"{time_stamp}:{CTX_PREFIX}:{cnt_packed}"[:24]
+        chars_left = 26 - len(context_id_start)
+        context_id = context_id_start + '0'.zfill(chars_left)[-chars_left:]
+        return Context(id=context_id)
 
     def ready_set(self, light, now):
         delta = now - self.recency[light]
