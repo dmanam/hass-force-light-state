@@ -133,7 +133,7 @@ class Forcer:
     def create_context(self):
         cnt_packed = base64.b85encode(_int_to_bytes(self._context_cnt, signed=False))
         self._context_cnt += 1
-        cid = f"{CTX_PREFIX}:{cnt_packed}"[:36]
+        cid = f"{CTX_PREFIX}:{cnt_packed}"[:26]
         return Context(id=cid)
 
     def ready_set(self, light, now):
