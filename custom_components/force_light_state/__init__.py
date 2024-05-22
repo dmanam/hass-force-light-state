@@ -43,6 +43,8 @@ from homeassistant.const import (
     EVENT_CALL_SERVICE,
 )
 
+import ulid_transform
+
 import voluptuous as vol
 
 from .const import *
@@ -131,7 +133,7 @@ class Forcer:
                         self.lights[eid][attr] = sdata[attr]
 
     def create_context(self):
-        # partially taken from https://github.com/basnijhot/adaptive_lighting
+        # partially taken from https://github.com/basnijhot/adaptive-lighting/blob/main/custom_components/adaptive_lighting/switch.py
         self._context_cnt += 1
         cnt_packed = base64.b85encode(_int_to_bytes(self._context_cnt, signed=False))[::-1]
         time_stamp = ulid_transform.ulid_now()[:10]  # time part of a ULID
